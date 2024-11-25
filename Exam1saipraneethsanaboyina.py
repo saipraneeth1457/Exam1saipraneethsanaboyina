@@ -1,80 +1,75 @@
 import streamlit as st
 import pandas as pd
-import matplotlib.pyplot as plt
+import numpy as np
 import seaborn as sns
+import matplotlib.pyplot as plt
+from scipy import stats
 
-# Streamlit app title
-st.title("Video Game Sales Data Explorer")
+# Page Configuration
+st.set_page_config(page_title="Car Price Analysis", layout="wide")
 
-# Sidebar for user inputs and settings
-st.sidebar.header("Settings")
-st.sidebar.write("Customize your analysis.")
+# Title
+st.title("Car Price Analysis")
 
-# File uploader
-uploaded_file = st.sidebar.file_uploader("Upload a dataset (CSV format)", type=["csv"])
+# Sidebar
+st.sidebar.header("Navigation")
+sections = ["Introduction", "Load Data", "Visualize Patterns", "Descriptive Statistics", "Correlation & Causation"]
+selected_section = st.sidebar.radio("Select Section", sections)
 
-if uploaded_file is not None:
-    # Load the dataset
-    df = pd.read_csv(uploaded_file)
-    st.write("## Dataset Preview")
-    st.dataframe(df)
+# Load Data
+@st.cache
+def load_data():
+    url = 'https://raw.githubusercontent.com/saipraneeth1457/Exam1saipraneethsanaboyina/refs/heads/main/Exam1_clean_df.csv'
+    return pd.read_csv(url)
 
-    # Data insights
-    st.write("### Dataset Information")
-    st.write(f"Number of rows: {df.shape[0]}")
-    st.write(f"Number of columns: {df.shape[1]}")
-    st.write("### Columns")
-    st.write(df.columns.tolist())
+if selected_section == "Introduction":
+    st.write("""
+    This app explores factors affecting car prices using data visualization, grouping, and correlation techniques.
+    """)
 
-    # Display descriptive statistics
+if selected_section == "Load Data":
+    df = load_data()
+    st.write("### Dataset")
+    st.dataframe(df.head())
+    st.write("### Data Types")
+    st.write(df.dtypes)
+
+if selected_section == "Visualize Patterns":
+    df = load_data()
+    st.write("### Visualizing Relationships")
+    st.write("Scatterplot: Engine Size vs. Price")
+    fig, ax = plt.subplots()
+    sns.regplot(x="engine-size", y="price", data=df, ax=ax)
+    st.pyplot(fig)
+
+    st.write("Scatterplot: Highway-MPG vs. Price")
+    fig, ax = plt.subplots()
+    sns.regplot(x="highway-mpg", y="price", data=df, ax=ax)
+    st.pyplot(fig)
+
+    st.write("Boxplot: Drive-Wheels vs. Price")
+    fig, ax = plt.subplots()
+    sns.boxplot(x="drive-wheels", y="price", data=df, ax=ax)
+    st.pyplot(fig)
+
+if selected_section == "Descriptive Statistics":
+    df = load_data()
     st.write("### Descriptive Statistics")
     st.write(df.describe())
+    st.write("Value Counts: Drive-Wheels")
+    st.write(df['drive-wheels'].value_counts())
 
-    # Interactive filtering
-    st.write("### Filter by Platform or Genre")
-    platforms = st.multiselect("Select Platform(s)", df["Platform"].unique())
-    genres = st.multiselect("Select Genre(s)", df["Genre"].unique())
+if selected_section == "Correlation & Causation":
+    df = load_data()
+    st.write("### Correlation and Causation")
+    st.write("Pearson Correlation: Horsepower and Price")
+    pearson_coef, p_value = stats.pearsonr(df['horsepower'], df['price'])
+    st.write(f"Pearson Coefficient: {pearson_coef:.2f}, P-Value: {p_value:.2e}")
 
-    filtered_df = df[
-        (df["Platform"].isin(platforms) if platforms else True) &
-        (df["Genre"].isin(genres) if genres else True)
-    ]
+    st.write("Pearson Correlation: Length and Price")
+    pearson_coef, p_value = stats.pearsonr(df['length'], df['price'])
+    st.write(f"Pearson Coefficient: {pearson_coef:.2f}, P-Value: {p_value:.2e}")
 
-    st.write("### Filtered Dataset")
-    st.dataframe(filtered_df)
-
-    # Visualizations
-    st.write("### Visualizations")
-
-    # Top-selling games
-    st.write("#### Top 10 Games by Global Sales")
-    top_sales = df.nlargest(10, "Global_Sales")
-    fig, ax = plt.subplots(figsize=(10, 6))
-    sns.barplot(data=top_sales, x="Global_Sales", y="Name", ax=ax)
-    ax.set_title("Top 10 Games by Global Sales")
-    st.pyplot(fig)
-
-    # Platform distribution
-    st.write("#### Sales Distribution by Platform")
-    platform_sales = df.groupby("Platform")["Global_Sales"].sum().sort_values(ascending=False)
-    fig, ax = plt.subplots(figsize=(10, 6))
-    platform_sales.plot(kind="bar", ax=ax)
-    ax.set_title("Total Global Sales by Platform")
-    st.pyplot(fig)
-
-    # Genre distribution
-    st.write("#### Sales Distribution by Genre")
-    genre_sales = df.groupby("Genre")["Global_Sales"].sum()
-    fig, ax = plt.subplots(figsize=(10, 6))
-    genre_sales.plot(kind="pie", autopct='%1.1f%%', ax=ax, ylabel="")
-    ax.set_title("Global Sales Distribution by Genre")
-    st.pyplot(fig)
-
-    # Insights summary
-    st.write("### Insights Summary")
-    st.write("Here are some key insights:")
-    st.write(f"- Total games in dataset: {df.shape[0]}")
-    st.write(f"- Most popular platform: {platform_sales.idxmax()} with {platform_sales.max()} global sales.")
-    st.write(f"- Most popular genre: {genre_sales.idxmax()} with {genre_sales.max()} global sales.")
-else:
-    st.write("### Please upload a dataset to begin analysis.")
+    st.write("Pearson Correlation: Width and Price")
+    pearson_coef, p_value = stats.pearsonr(df['width'], df['price'])
+    st.write(f"Pearson Coefficient: {pearson_coef:.2f}, P-Value: {p_value:.2e}")
